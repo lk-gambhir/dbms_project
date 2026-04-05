@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Placement Portal — TIET</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════ SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">PP</div>
+    <div>
+      <div class="brand-name">PlacePortal</div>
+      <div class="brand-sub">TIET · UCS310</div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="#" class="nav-item active" data-page="dashboard">
+      <span class="nav-icon">◈</span> Dashboard
+    </a>
+    <a href="#" class="nav-item" data-page="students">
+      <span class="nav-icon">◉</span> Students
+    </a>
+    <a href="#" class="nav-item" data-page="skills">
+      <span class="nav-icon">◆</span> Skills
+    </a>
+    <a href="#" class="nav-item" data-page="companies">
+      <span class="nav-icon">▣</span> Companies
+    </a>
+    <a href="#" class="nav-item" data-page="jobs">
+      <span class="nav-icon">◎</span> Job Roles
+    </a>
+    <a href="#" class="nav-item" data-page="apply">
+      <span class="nav-icon">▷</span> Apply
+    </a>
+    <a href="#" class="nav-item" data-page="applications">
+      <span class="nav-icon">≡</span> Applications
+    </a>
+    <a href="#" class="nav-item" data-page="results">
+      <span class="nav-icon">★</span> Results
+    </a>
+  </nav>
+  <div class="sidebar-footer">DBMS Project · 2025–26</div>
+</aside>
+
+<!-- ═══════════════════════════════════════════════ MAIN -->
+<main class="main-content">
+  <header class="topbar">
+    <button class="menu-btn" id="menuBtn">☰</button>
+    <div class="topbar-title" id="pageTitle">Dashboard</div>
+    <div class="topbar-right">
+      <div class="status-dot"></div>
+      <span class="status-text">Connected</span>
+    </div>
+  </header>
+
+  <!-- ─── DASHBOARD PAGE ───────────────────────────────── -->
+  <section class="page active" id="page-dashboard">
+    <div class="page-header">
+      <h1>Overview</h1>
+      <p>Real-time placement statistics</p>
+    </div>
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card" style="--c:#4f8ef7">
+        <div class="stat-label">Students</div>
+        <div class="stat-value" id="stat-students">—</div>
+      </div>
+      <div class="stat-card" style="--c:#f7a24f">
+        <div class="stat-label">Placed</div>
+        <div class="stat-value" id="stat-placed">—</div>
+      </div>
+      <div class="stat-card" style="--c:#4fd67c">
+        <div class="stat-label">Companies</div>
+        <div class="stat-value" id="stat-companies">—</div>
+      </div>
+      <div class="stat-card" style="--c:#c04ff7">
+        <div class="stat-label">Job Roles</div>
+        <div class="stat-value" id="stat-jobs">—</div>
+      </div>
+      <div class="stat-card" style="--c:#f74f6a">
+        <div class="stat-label">Applications</div>
+        <div class="stat-value" id="stat-apps">—</div>
+      </div>
+      <div class="stat-card" style="--c:#4fd6f7">
+        <div class="stat-label">Avg CGPA</div>
+        <div class="stat-value" id="stat-cgpa">—</div>
+      </div>
+      <div class="stat-card" style="--c:#f7e44f">
+        <div class="stat-label">Top Package</div>
+        <div class="stat-value" id="stat-pkg">—</div>
+        <div class="stat-sub">LPA</div>
+      </div>
+    </div>
+    <div class="section-header"><h2>Branch-wise Placements</h2></div>
+    <div id="branchTable"></div>
+  </section>
+
+  <!-- ─── STUDENTS PAGE ────────────────────────────────── -->
+  <section class="page" id="page-students">
+    <div class="page-header">
+      <h1>Students</h1>
+      <button class="btn-primary" onclick="toggleForm('studentForm')">+ Add Student</button>
+    </div>
+    <div class="form-card hidden" id="studentForm">
+      <h3>Add New Student</h3>
+      <div class="form-grid">
+        <input type="text"   id="s_name"   placeholder="Full Name" />
+        <input type="email"  id="s_email"  placeholder="Email Address" />
+        <input type="text"   id="s_branch" placeholder="Branch (CSE, ECE...)" />
+        <input type="number" id="s_cgpa"   placeholder="CGPA (0–10)" step="0.01" min="0" max="10" />
+        <input type="number" id="s_year"   placeholder="Year (1–5)" min="1" max="5" />
+      </div>
+      <div class="form-actions">
+        <button class="btn-primary" onclick="addStudent()">Add Student</button>
+        <button class="btn-ghost"   onclick="toggleForm('studentForm')">Cancel</button>
+      </div>
+    </div>
+    <div class="toolbar">
+      <input type="text" id="studentSearch" placeholder="🔍  Search by name, branch, email..." oninput="loadStudents()" />
+      <select id="studentSort" onchange="loadStudents()">
+        <option value="">Sort: Latest</option>
+        <option value="cgpa">Sort: CGPA ↓</option>
+      </select>
+    </div>
+    <div id="studentsTable"></div>
+  </section>
+
+  <!-- ─── SKILLS PAGE ──────────────────────────────────── -->
+  <section class="page" id="page-skills">
+    <div class="page-header">
+      <h1>Skills</h1>
+    </div>
+    <div class="two-col">
+      <div class="form-card">
+        <h3>Add New Skill</h3>
+        <input type="text" id="skill_name" placeholder="Skill name (e.g. Python)" />
+        <button class="btn-primary mt" onclick="addSkill()">Add Skill</button>
+        <div id="skillsList" class="chips-list"></div>
+      </div>
+      <div class="form-card">
+        <h3>Assign Skill to Student</h3>
+        <select id="assign_student"></select>
+        <select id="assign_skill" class="mt"></select>
+        <button class="btn-primary mt" onclick="assignSkill()">Assign Skill</button>
+        <div class="section-header mt"><h4>Current Skills</h4></div>
+        <div id="assignedSkills" class="chips-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── COMPANIES PAGE ───────────────────────────────── -->
+  <section class="page" id="page-companies">
+    <div class="page-header">
+      <h1>Companies</h1>
+      <button class="btn-primary" onclick="toggleForm('companyForm')">+ Add Company</button>
+    </div>
+    <div class="form-card hidden" id="companyForm">
+      <h3>Add Company</h3>
+      <div class="form-grid">
+        <input type="text" id="c_name"     placeholder="Company Name" />
+        <input type="text" id="c_location" placeholder="Location" />
+      </div>
+      <div class="form-actions">
+        <button class="btn-primary" onclick="addCompany()">Add Company</button>
+        <button class="btn-ghost"   onclick="toggleForm('companyForm')">Cancel</button>
+      </div>
+    </div>
+    <div id="companiesTable"></div>
+  </section>
+
+  <!-- ─── JOBS PAGE ────────────────────────────────────── -->
+  <section class="page" id="page-jobs">
+    <div class="page-header">
+      <h1>Job Roles</h1>
+      <button class="btn-primary" onclick="toggleForm('jobForm')">+ Add Job Role</button>
+    </div>
+    <div class="form-card hidden" id="jobForm">
+      <h3>Add Job Role</h3>
+      <div class="form-grid">
+        <select id="j_company"></select>
+        <input type="text"   id="j_role"     placeholder="Role Title" />
+        <input type="number" id="j_mincgpa"  placeholder="Min CGPA" step="0.1" min="0" max="10" />
+        <input type="number" id="j_package"  placeholder="Package (LPA)" step="0.5" />
+      </div>
+      <div class="form-actions">
+        <button class="btn-primary" onclick="addJobRole()">Add Role</button>
+        <button class="btn-ghost"   onclick="toggleForm('jobForm')">Cancel</button>
+      </div>
+    </div>
+    <div id="jobsTable"></div>
+  </section>
+
+  <!-- ─── APPLY PAGE ───────────────────────────────────── -->
+  <section class="page" id="page-apply">
+    <div class="page-header">
+      <h1>Apply for Job</h1>
+    </div>
+    <div class="form-card" style="max-width:480px">
+      <h3>Submit Application</h3>
+      <label class="form-label">Select Student</label>
+      <select id="apply_student" onchange="checkEligibility()"></select>
+      <label class="form-label mt">Select Job Role</label>
+      <select id="apply_job" onchange="checkEligibility()"></select>
+      <div id="eligibilityBox" class="eligibility-box hidden"></div>
+      <button class="btn-primary mt" onclick="applyForJob()">Submit Application</button>
+    </div>
+  </section>
+
+  <!-- ─── APPLICATIONS PAGE ────────────────────────────── -->
+  <section class="page" id="page-applications">
+    <div class="page-header">
+      <h1>Applications</h1>
+    </div>
+    <div id="applicationsTable"></div>
+  </section>
+
+  <!-- ─── RESULTS PAGE ─────────────────────────────────── -->
+  <section class="page" id="page-results">
+    <div class="page-header">
+      <h1>Placement Results</h1>
+      <button class="btn-primary" onclick="toggleForm('resultForm')">+ Add Result</button>
+    </div>
+    <div class="form-card hidden" id="resultForm">
+      <h3>Record Placement Result</h3>
+      <div class="form-grid">
+        <select id="r_student"></select>
+        <select id="r_job"></select>
+        <select id="r_status">
+          <option value="Placed">Placed</option>
+          <option value="Not Placed">Not Placed</option>
+        </select>
+      </div>
+      <div class="form-actions">
+        <button class="btn-primary" onclick="addResult()">Record Result</button>
+        <button class="btn-ghost"   onclick="toggleForm('resultForm')">Cancel</button>
+      </div>
+    </div>
+    <div id="resultsTable"></div>
+  </section>
+
+</main>
+
+<!-- ─── TOAST NOTIFICATION ───────────────────────────────── -->
+<div class="toast" id="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>

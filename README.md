@@ -1,114 +1,96 @@
-# 🎓 Placement Portal
-### A Full-Stack Database Management System for Student Placement
-**Course:** UCS310 – Database Management Systems  
-**Institute:** COPC, Thapar Institute of Engineering & Technology  
-**Academic Year:** 2025–2026  
-**Team:** Lakshay Gambhir · Gagan Deep Singh · Divot Singh  
-**Lab Instructor:** Yadwinder Singh  
+# Placement Portal
+### Full-Stack Database Management System for Student Placement
+**Course:** UCS310 - Database Management Systems  
+**Institute:** COE, Thapar Institute of Engineering & Technology  
+**Academic Year:** 2025-2026  
+**Team:** Lakshay Gambhir, Gagan Deep Singh, Divot Singh  
+**Lab Instructor:** Yadwinder Singh
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 placement-portal/
 ├── frontend/
-│   ├── index.html       ← Single-page application (all pages)
-│   ├── style.css        ← Dark theme, responsive UI
-│   └── script.js        ← Vanilla JS, fetch() API calls
+│   ├── index.html       - Single-page application
+│   ├── style.css        - Dark theme, responsive UI
+│   └── script.js        - Vanilla JS with fetch() API calls
 │
 ├── backend/
-│   ├── server.js        ← Express entry point
-│   ├── .env.example     ← Copy to .env and fill credentials
-│   ├── routes/
-│   │   ├── studentRoutes.js
-│   │   ├── skillRoutes.js
-│   │   ├── companyRoutes.js
-│   │   ├── applicationRoutes.js
-│   │   └── placementRoutes.js
-│   ├── controllers/
-│   │   ├── studentController.js
-│   │   ├── skillController.js
-│   │   ├── companyController.js
-│   │   ├── applicationController.js
-│   │   └── placementController.js
+│   ├── server.js        - Express entry point
+│   ├── .env             - MySQL credentials
+│   ├── routes/          - API route handlers
+│   ├── controllers/     - Business logic
 │   └── models/
-│       └── db.js        ← MySQL2 connection pool
+│       └── db.js        - MySQL2 connection pool
 │
-└── database/
-    └── schema.sql       ← Full schema + triggers + seed data
+├── database/
+    ├── schema.sql       - Full schema + triggers + procedures + seed data
 ```
 
 ---
 
-## ⚙️ Setup Instructions
+## Tech Stack
 
-### 1. Prerequisites
-- Node.js v18+ → https://nodejs.org
-- MySQL 8.0+   → https://mysql.com
-
-### 2. Database Setup
-```bash
-# Log into MySQL
-mysql -u root -p
-
-# Run the schema file (creates DB, tables, triggers, seed data)
-source /path/to/placement-portal/database/schema.sql
-# OR
-mysql -u root -p < database/schema.sql
-```
-
-### 3. Backend Setup
-```bash
-cd backend
-
-# Install dependencies
-npm install
-
-# Create your .env file
-cp .env.example .env
-
-# Edit .env with your MySQL credentials:
-# DB_HOST=localhost
-# DB_USER=root
-# DB_PASSWORD=your_password
-# DB_NAME=placement_portal
-# PORT=5000
-
-# Start the server
-npm start
-# OR for development with auto-reload:
-npm run dev
-```
-
-You should see:
-```
-✅ MySQL connected successfully
-🚀 Placement Portal API running at http://localhost:5000
-```
-
-### 4. Frontend Setup
-```bash
-# Option A — Open directly in browser (simplest)
-open frontend/index.html
-
-# Option B — Serve with a local server (recommended)
-npx serve frontend
-# Then open http://localhost:3000
-```
-
-> **Note:** The frontend connects to `http://localhost:5000/api` by default.  
-> If you change the backend PORT, update the `API` constant in `frontend/script.js`.
+| Layer     | Technology           |
+|-----------|----------------------|
+| Frontend  | HTML5, CSS3, Vanilla JS |
+| Backend   | Node.js + Express    |
+| Database  | MySQL 8.0            |
+| Driver    | mysql2 (promises)    |
+| Dev Tool  | nodemon              |
 
 ---
 
-## 🔌 REST API Reference
+## Database Design
 
-### Base URL: `http://localhost:5000/api`
+### Tables (3NF Normalized)
+
+| Table                 | Primary Key          | Description                        |
+|-----------------------|----------------------|------------------------------------|
+| ADDRESS               | address_id           | Normalized address data            |
+| STUDENT               | student_id           | Student academic info              |
+| SKILL                 | skill_id             | Available skills                   |
+| STUDENT_SKILL         | (student_id, skill_id) | Student-Skill junction (M:N)     |
+| COMPANY               | company_id           | Recruiting companies               |
+| JOB_ROLE              | job_id               | Roles offered by companies         |
+| JOB_SKILL_REQUIREMENT | (job_id, skill_id)   | Job-Skill junction (M:N)          |
+| APPLICATION           | application_id       | Student job applications           |
+| PLACEMENT_RESULT      | result_id            | Final placement outcomes           |
+
+### PL/SQL Features
+
+| Feature              | Name                          | Description                                        |
+|----------------------|-------------------------------|----------------------------------------------------|
+| Trigger              | before_application_insert     | Validates CGPA eligibility and job active status   |
+| Trigger              | before_student_delete         | Prevents deletion of placed students               |
+| Stored Procedure     | sp_apply_for_job              | Application with transaction + concurrency control |
+| Stored Procedure     | sp_process_applications       | Bulk select/reject using cursor                    |
+| Stored Procedure     | sp_record_placement           | Placement recording with double-placement check    |
+| Stored Procedure     | sp_get_dashboard_stats        | Dashboard statistics in single call                |
+| Stored Procedure     | sp_transfer_student           | Branch transfer with SAVEPOINT                     |
+| Stored Procedure     | GetPlacementSummary           | Placed students report                             |
+| Function             | fn_is_placed                  | Returns student placement status                   |
+| Function             | fn_eligible_job_count         | Counts eligible jobs for a student                 |
+| Function             | fn_branch_placement_pct       | Branch placement percentage                        |
+| View                 | eligible_applicants           | Students eligible per job role                     |
+| View                 | vw_application_details        | Application details with joins                     |
+| View                 | vw_student_profile            | Student profile with placement info                |
+
+### Key Constraints
+- CGPA: 0.00 - 10.00 (CHECK constraint)
+- Email: UNIQUE across all students
+- Application: UNIQUE (student_id, job_id)
+- Foreign keys enforced with ON DELETE CASCADE
 
 ---
 
-### 👤 Students `/api/students`
+## REST API Reference
+
+**Base URL:** `http://localhost:5001/api`
+
+### Students `/api/students`
 
 | Method | Endpoint              | Description              |
 |--------|-----------------------|--------------------------|
@@ -119,21 +101,9 @@ npx serve frontend
 | POST   | `/students`           | Add new student          |
 | PUT    | `/students/:id`       | Update student           |
 | DELETE | `/students/:id`       | Delete student           |
+| PUT    | `/students/:id/transfer` | Transfer branch (SP)  |
 
-**POST /students — Request Body:**
-```json
-{
-  "name":   "Arjun Sharma",
-  "email":  "arjun@tiet.edu",
-  "branch": "CSE",
-  "cgpa":   8.9,
-  "year":   4
-}
-```
-
----
-
-### 🔧 Skills `/api/skills`
+### Skills `/api/skills`
 
 | Method | Endpoint                        | Description               |
 |--------|---------------------------------|---------------------------|
@@ -143,9 +113,7 @@ npx serve frontend
 | DELETE | `/skills/:student_id/:skill_id` | Remove skill from student |
 | GET    | `/skills/student/:student_id`   | Get student's skills      |
 
----
-
-### 🏢 Companies & Jobs `/api/companies`
+### Companies & Jobs `/api/companies`
 
 | Method | Endpoint                     | Description             |
 |--------|------------------------------|-------------------------|
@@ -156,122 +124,50 @@ npx serve frontend
 | POST   | `/companies/jobs`            | Add job role            |
 | DELETE | `/companies/jobs/:id`        | Delete job role         |
 
----
+### Applications `/api/applications`
 
-### 📋 Applications `/api/applications`
+| Method | Endpoint                    | Description                             |
+|--------|-----------------------------|-----------------------------------------|
+| GET    | `/applications`             | Get all applications                    |
+| POST   | `/applications`             | Apply for job (calls sp_apply_for_job)  |
+| PUT    | `/applications/:id/status`  | Update status with row-level locking    |
+| POST   | `/applications/process`     | Bulk process (calls sp_process_applications) |
+| GET    | `/applications/student/:id` | Get applications by student             |
 
-| Method | Endpoint                          | Description                       |
-|--------|-----------------------------------|-----------------------------------|
-| GET    | `/applications`                   | Get all applications              |
-| POST   | `/applications`                   | Apply for job (CGPA check auto)   |
-| PUT    | `/applications/:id/status`        | Update status (Pending/Selected/Rejected) |
-| GET    | `/applications/student/:id`       | Get applications by student       |
+### Placements `/api/placements`
 
-**PUT /applications/:id/status — Body:**
-```json
-{ "status": "Selected" }
-```
-
----
-
-### 🏆 Placements `/api/placements`
-
-| Method | Endpoint               | Description                   |
-|--------|------------------------|-------------------------------|
-| GET    | `/placements`          | Get all placement results     |
-| POST   | `/placements`          | Add placement result          |
-| GET    | `/placements/stats`    | Dashboard statistics          |
-| GET    | `/placements/branch`   | Branch-wise placement summary |
+| Method | Endpoint               | Description                              |
+|--------|------------------------|------------------------------------------|
+| GET    | `/placements`          | Get all placement results                |
+| POST   | `/placements`          | Record placement (calls sp_record_placement) |
+| GET    | `/placements/stats`    | Dashboard statistics (calls sp_get_dashboard_stats) |
+| GET    | `/placements/branch`   | Branch-wise placement summary            |
+| GET    | `/placements/summary`  | Placement summary (calls GetPlacementSummary) |
 
 ---
 
-## 🗄️ Database Design
-
-### Tables
-| Table             | Primary Key    | Description                  |
-|-------------------|----------------|------------------------------|
-| STUDENT           | student_id     | Student academic info        |
-| SKILL             | skill_id       | Available skills             |
-| STUDENT_SKILL     | (student, skill) | Many-to-many junction      |
-| COMPANY           | company_id     | Recruiting companies         |
-| JOB_ROLE          | job_id         | Roles offered by companies   |
-| APPLICATION       | application_id | Student job applications     |
-| PLACEMENT_RESULT  | result_id      | Final placement outcomes     |
-
-### Key Constraints
-- CGPA: 0.00 – 10.00 (CHECK constraint)
-- Email: UNIQUE across all students
-- Application: UNIQUE (student_id, job_id) — no duplicate applications
-- All foreign keys enforced with CASCADE
-
-### PL/SQL Features Implemented
-- **Trigger:** `before_application_insert` — Auto-validates CGPA eligibility
-- **Stored Procedure:** `GetPlacementSummary()` — Placed students report
-- **View:** `eligible_applicants` — Students eligible per job role
-
----
-
-## 🎨 Frontend Pages
+## Frontend Pages
 
 | Page         | Features                                              |
 |--------------|-------------------------------------------------------|
 | Dashboard    | Stats cards, branch-wise placement bar chart          |
 | Students     | Add/Delete/Search/Sort by CGPA                        |
-| Skills       | Add skills, assign/remove skills per student (chips UI) |
+| Skills       | Add skills, assign/remove skills per student          |
 | Companies    | Add and list recruiting companies                     |
-| Job Roles    | Add roles with package & CGPA filter                  |
+| Job Roles    | Add roles with package and CGPA filter                |
 | Apply        | Live eligibility check before submission              |
-| Applications | Track status, update Pending/Selected/Rejected        |
-| Results      | Record & view final placement outcomes                |
+| Applications | Track status, bulk process with cursor-based SP       |
+| Results      | Record and view final placement outcomes              |
 
 ---
 
-## 📐 Normalization
+## Normalization
 
-The schema is normalized to **3NF / BCNF**:
+The schema is normalized to **3NF**:
 - **1NF:** No repeating groups; all attributes atomic
 - **2NF:** No partial dependencies on composite keys
-- **3NF:** No transitive dependencies (student branch ≠ determinant of other fields)
+- **3NF:** No transitive dependencies; address data separated into ADDRESS table
 
 ---
 
-## 🧪 Sample API Test (curl)
-
-```bash
-# Health check
-curl http://localhost:5000/api/health
-
-# Get all students
-curl http://localhost:5000/api/students
-
-# Add a student
-curl -X POST http://localhost:5000/api/students \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Test Student","email":"test@tiet.edu","branch":"CSE","cgpa":8.5,"year":3}'
-
-# Apply for a job
-curl -X POST http://localhost:5000/api/applications \
-  -H "Content-Type: application/json" \
-  -d '{"student_id":1,"job_id":1}'
-
-# Update application status
-curl -X PUT http://localhost:5000/api/applications/1/status \
-  -H "Content-Type: application/json" \
-  -d '{"status":"Selected"}'
-```
-
----
-
-## 🛠️ Tech Stack
-
-| Layer     | Technology           |
-|-----------|----------------------|
-| Frontend  | HTML5, CSS3, Vanilla JS |
-| Backend   | Node.js + Express    |
-| Database  | MySQL 8.0            |
-| ORM/Driver| mysql2 (promises)    |
-| Dev Tool  | nodemon              |
-
----
-
-*Placement Portal — UCS310 DBMS Project · TIET 2025–26*
+*Placement Portal - UCS310 DBMS Project, TIET 2025-26*

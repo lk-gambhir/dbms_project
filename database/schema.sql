@@ -1,17 +1,8 @@
--- ============================================================
--- PLACEMENT PORTAL - DATABASE SCHEMA (Simplified PL/SQL Edition)
--- Course: UCS310 - DBMS | TIET, COPC
--- Features: Triggers (business rules), Procedures, Functions,
---           Cursors, Transaction Management, Concurrency Control, 3NF
--- ============================================================
 
 DROP DATABASE IF EXISTS placement_portal;
 CREATE DATABASE placement_portal;
 USE placement_portal;
 
--- ============================================================
--- NORMALIZATION: Separate ADDRESS table (3NF - no transitive deps)
--- ============================================================
 CREATE TABLE IF NOT EXISTS ADDRESS (
     address_id   INT AUTO_INCREMENT PRIMARY KEY,
     city         VARCHAR(100) NOT NULL,
@@ -20,9 +11,6 @@ CREATE TABLE IF NOT EXISTS ADDRESS (
     UNIQUE KEY unique_address (city, state, country)
 );
 
--- ============================================================
--- TABLE: STUDENT (3NF - atomic attributes, no partial deps)
--- ============================================================
 CREATE TABLE IF NOT EXISTS STUDENT (
     student_id   INT AUTO_INCREMENT PRIMARY KEY,
     name         VARCHAR(100) NOT NULL,
@@ -39,19 +27,12 @@ CREATE TABLE IF NOT EXISTS STUDENT (
     INDEX idx_student_cgpa (cgpa)
 );
 
--- ============================================================
--- TABLE: SKILL
--- ============================================================
 CREATE TABLE IF NOT EXISTS SKILL (
     skill_id    INT AUTO_INCREMENT PRIMARY KEY,
     skill_name  VARCHAR(100) NOT NULL UNIQUE,
     category    VARCHAR(50)  DEFAULT 'General'
 );
 
--- ============================================================
--- TABLE: STUDENT_SKILL (Many-to-Many: Student <-> Skill)
--- Normalized junction table with proficiency level
--- ============================================================
 CREATE TABLE IF NOT EXISTS STUDENT_SKILL (
     student_id       INT NOT NULL,
     skill_id         INT NOT NULL,
@@ -61,9 +42,6 @@ CREATE TABLE IF NOT EXISTS STUDENT_SKILL (
     FOREIGN KEY (skill_id)   REFERENCES SKILL(skill_id)     ON DELETE CASCADE
 );
 
--- ============================================================
--- TABLE: COMPANY (3NF - location split to address_id)
--- ============================================================
 CREATE TABLE IF NOT EXISTS COMPANY (
     company_id    INT AUTO_INCREMENT PRIMARY KEY,
     company_name  VARCHAR(150) NOT NULL,
@@ -72,9 +50,6 @@ CREATE TABLE IF NOT EXISTS COMPANY (
     INDEX idx_company_name (company_name)
 );
 
--- ============================================================
--- TABLE: JOB_ROLE
--- ============================================================
 CREATE TABLE IF NOT EXISTS JOB_ROLE (
     job_id       INT AUTO_INCREMENT PRIMARY KEY,
     company_id   INT            NOT NULL,
@@ -90,10 +65,6 @@ CREATE TABLE IF NOT EXISTS JOB_ROLE (
     INDEX idx_job_active (is_active)
 );
 
--- ============================================================
--- NORMALIZATION: JOB_SKILL_REQUIREMENT (3NF junction)
--- Maps which skills are required for which jobs
--- ============================================================
 CREATE TABLE IF NOT EXISTS JOB_SKILL_REQUIREMENT (
     job_id    INT NOT NULL,
     skill_id  INT NOT NULL,
@@ -102,9 +73,6 @@ CREATE TABLE IF NOT EXISTS JOB_SKILL_REQUIREMENT (
     FOREIGN KEY (skill_id) REFERENCES SKILL(skill_id)  ON DELETE CASCADE
 );
 
--- ============================================================
--- TABLE: APPLICATION
--- ============================================================
 CREATE TABLE IF NOT EXISTS APPLICATION (
     application_id  INT AUTO_INCREMENT PRIMARY KEY,
     student_id      INT NOT NULL,
@@ -118,9 +86,6 @@ CREATE TABLE IF NOT EXISTS APPLICATION (
     INDEX idx_app_status (status)
 );
 
--- ============================================================
--- TABLE: PLACEMENT_RESULT
--- ============================================================
 CREATE TABLE IF NOT EXISTS PLACEMENT_RESULT (
     result_id     INT AUTO_INCREMENT PRIMARY KEY,
     student_id    INT NOT NULL,
@@ -132,10 +97,6 @@ CREATE TABLE IF NOT EXISTS PLACEMENT_RESULT (
     FOREIGN KEY (job_id)     REFERENCES JOB_ROLE(job_id)    ON DELETE CASCADE
 );
 
--- ============================================================
--- TRIGGER 1: Auto-check CGPA eligibility BEFORE application
--- Business rule: student must meet min CGPA & job must be active
--- ============================================================
 DELIMITER $$
 CREATE TRIGGER before_application_insert
 BEFORE INSERT ON APPLICATION
@@ -160,10 +121,6 @@ BEGIN
 END$$
 DELIMITER ;
 
--- ============================================================
--- TRIGGER 2: Prevent deletion of placed students
--- Business rule: protect placement records
--- ============================================================
 DELIMITER $$
 CREATE TRIGGER before_student_delete
 BEFORE DELETE ON STUDENT
@@ -180,9 +137,6 @@ BEGIN
 END$$
 DELIMITER ;
 
--- ============================================================
--- FUNCTION 1: Get student placement status
--- ============================================================
 DELIMITER $$
 CREATE FUNCTION fn_is_placed(p_student_id INT)
 RETURNS VARCHAR(20)
@@ -198,9 +152,6 @@ BEGIN
 END$$
 DELIMITER ;
 
--- ============================================================
--- FUNCTION 2: Count eligible jobs for a student
--- ============================================================
 DELIMITER $$
 CREATE FUNCTION fn_eligible_job_count(p_student_id INT)
 RETURNS INT
@@ -215,9 +166,6 @@ BEGIN
 END$$
 DELIMITER ;
 
--- ============================================================
--- FUNCTION 3: Calculate placement percentage for a branch
--- ============================================================
 DELIMITER $$
 CREATE FUNCTION fn_branch_placement_pct(p_branch VARCHAR(50))
 RETURNS DECIMAL(5,2)
@@ -235,9 +183,6 @@ BEGIN
 END$$
 DELIMITER ;
 
--- ============================================================
--- PROCEDURE 1: GetPlacementSummary (with cursor)
--- ============================================================
 DELIMITER $$
 CREATE PROCEDURE GetPlacementSummary()
 BEGIN
@@ -253,11 +198,6 @@ BEGIN
 END$$
 DELIMITER ;
 
--- ============================================================
--- PROCEDURE 2: Apply for Job WITH TRANSACTION MANAGEMENT
--- Demonstrates: START TRANSACTION, SAVEPOINT, COMMIT, ROLLBACK
--- Concurrency: SELECT ... FOR UPDATE for row-level locking
--- ============================================================
 DELIMITER $$
 CREATE PROCEDURE sp_apply_for_job(
     IN p_student_id INT,
@@ -283,7 +223,6 @@ BEGIN
 
     START TRANSACTION;
 
-    -- Concurrency Control: Lock student row to prevent dirty reads
     SELECT cgpa INTO s_cgpa
     FROM STUDENT WHERE student_id = p_student_id FOR UPDATE;
 
@@ -293,7 +232,6 @@ BEGIN
     ELSE
         SAVEPOINT after_student_check;
 
-        -- Concurrency Control: Lock job row
         SELECT min_cgpa, openings, is_active INTO j_min_cgpa, j_openings, j_active
         FROM JOB_ROLE WHERE job_id = p_job_id FOR UPDATE;
 
@@ -310,7 +248,6 @@ BEGIN
             ROLLBACK;
             SET p_result = CONCAT('ERROR: CGPA ', s_cgpa, ' below minimum ', j_min_cgpa);
         ELSE
-            -- Check openings vs current selected applications
             SELECT COUNT(*) INTO current_apps
             FROM APPLICATION WHERE job_id = p_job_id AND status = 'Selected';
 
@@ -328,10 +265,6 @@ BEGIN
 END$$
 DELIMITER ;
 
--- ============================================================
--- PROCEDURE 3: Bulk select/reject with CURSOR + TRANSACTION
--- Processes all pending applications for a job
--- ============================================================
 DELIMITER $$
 CREATE PROCEDURE sp_process_applications(
     IN p_job_id INT,
@@ -347,7 +280,6 @@ BEGIN
     DECLARE v_openings INT;
     DECLARE v_already_selected INT;
 
-    -- CURSOR declaration
     DECLARE app_cursor CURSOR FOR
         SELECT a.application_id, a.student_id, s.cgpa
         FROM APPLICATION a
@@ -368,7 +300,6 @@ BEGIN
 
     START TRANSACTION;
 
-    -- Lock the job row for concurrency
     SELECT openings INTO v_openings FROM JOB_ROLE WHERE job_id = p_job_id FOR UPDATE;
     SELECT COUNT(*) INTO v_already_selected
     FROM APPLICATION WHERE job_id = p_job_id AND status = 'Selected';
@@ -392,9 +323,6 @@ BEGIN
 END$$
 DELIMITER ;
 
--- ============================================================
--- PROCEDURE 4: Record placement with transaction safety
--- ============================================================
 DELIMITER $$
 CREATE PROCEDURE sp_record_placement(
     IN p_student_id INT,
@@ -412,7 +340,6 @@ BEGIN
 
     START TRANSACTION;
 
-    -- Concurrency: lock student to prevent double placement
     SELECT COUNT(*) INTO already_placed
     FROM PLACEMENT_RESULT
     WHERE student_id = p_student_id AND final_status = 'Placed'
@@ -431,9 +358,6 @@ BEGIN
 END$$
 DELIMITER ;
 
--- ============================================================
--- PROCEDURE 5: Get dashboard stats (single optimized call)
--- ============================================================
 DELIMITER $$
 CREATE PROCEDURE sp_get_dashboard_stats()
 BEGIN
@@ -448,10 +372,6 @@ BEGIN
 END$$
 DELIMITER ;
 
--- ============================================================
--- PROCEDURE 6: Transfer student (demonstrates SAVEPOINT)
--- Updates student branch with transaction safety
--- ============================================================
 DELIMITER $$
 CREATE PROCEDURE sp_transfer_student(
     IN p_student_id INT,
@@ -485,9 +405,6 @@ BEGIN
 END$$
 DELIMITER ;
 
--- ============================================================
--- VIEW 1: Eligible applicants per job
--- ============================================================
 CREATE OR REPLACE VIEW eligible_applicants AS
 SELECT
     s.student_id, s.name, s.cgpa, s.branch,
@@ -497,9 +414,6 @@ FROM STUDENT s
 JOIN JOB_ROLE j ON s.cgpa >= j.min_cgpa AND j.is_active = TRUE
 JOIN COMPANY  c ON j.company_id = c.company_id;
 
--- ============================================================
--- VIEW 2: Application details with all joins
--- ============================================================
 CREATE OR REPLACE VIEW vw_application_details AS
 SELECT
     a.application_id, a.status, a.applied_at, a.updated_at,
@@ -511,9 +425,6 @@ JOIN STUDENT  s ON a.student_id = s.student_id
 JOIN JOB_ROLE j ON a.job_id     = j.job_id
 JOIN COMPANY  c ON j.company_id = c.company_id;
 
--- ============================================================
--- VIEW 3: Student profile with placement info
--- ============================================================
 CREATE OR REPLACE VIEW vw_student_profile AS
 SELECT
     s.*,
@@ -522,9 +433,6 @@ SELECT
     (SELECT COUNT(*) FROM APPLICATION a WHERE a.student_id = s.student_id) AS total_applications
 FROM STUDENT s;
 
--- ============================================================
--- SAMPLE SEED DATA
--- ============================================================
 
 INSERT INTO ADDRESS (city, state, country) VALUES
 ('Patiala', 'Punjab', 'India'),

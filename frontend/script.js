@@ -1,6 +1,7 @@
 /* ══════════════════════════════════════════════════════════
    PLACEMENT PORTAL — FRONTEND SCRIPT
    Vanilla JS, uses fetch() to call Express REST API
+   Enhanced: Bulk Processing, SP-backed operations
    ══════════════════════════════════════════════════════════ */
 
 const API = 'http://localhost:5001/api';
@@ -84,6 +85,8 @@ function statusBadge(status) {
     return `<span class="badge badge-${cls}">${status}</span>`;
 }
 
+
+
 // ─── DASHBOARD ───────────────────────────────────────────────
 async function loadDashboard() {
     try {
@@ -110,7 +113,7 @@ async function loadDashboard() {
                 ['Branch', 'Total Students', 'Placed', 'Placement %'],
                 branch.data,
                 row => {
-                    const pct = row.total > 0 ? Math.round((row.placed / row.total) * 100) : 0;
+                    const pct = row.placement_pct || (row.total > 0 ? Math.round((row.placed / row.total) * 100) : 0);
                     return `<tr>
                         <td><strong>${row.branch}</strong></td>
                         <td>${row.total}</td>
@@ -141,7 +144,7 @@ async function loadStudents() {
     const data    = await res.json();
 
     renderTable('studentsTable',
-        ['ID', 'Name', 'Email', 'Branch', 'CGPA', 'Year', 'Actions'],
+        ['ID', 'Name', 'Email', 'Branch', 'CGPA', 'Year', 'Status', 'Actions'],
         data.data,
         s => `<tr>
             <td style="color:var(--text2)">#${s.student_id}</td>
@@ -150,6 +153,7 @@ async function loadStudents() {
             <td>${s.branch}</td>
             <td><span style="color:${s.cgpa>=8?'var(--success)':s.cgpa>=6?'var(--warning)':'var(--danger)'}; font-weight:700">${s.cgpa}</span></td>
             <td>${s.year}</td>
+            <td>${statusBadge(s.placement_status || 'Not Placed')}</td>
             <td>
                 <button class="btn-sm btn-danger" onclick="deleteStudent(${s.student_id})">Delete</button>
             </td>
@@ -194,7 +198,7 @@ async function loadSkills() {
 
     // Render skill chips
     const chips = data.data.map(sk =>
-        `<span class="chip">${sk.skill_name}</span>`
+        `<span class="chip">${sk.skill_name} <span style="font-size:10px;opacity:0.6">(${sk.category || 'General'})</span></span>`
     ).join('');
     document.getElementById('skillsList').innerHTML = chips || '<span style="color:var(--text2);font-size:12px">No skills yet</span>';
 
@@ -285,7 +289,7 @@ async function loadJobs() {
     const res  = await fetch(`${API}/companies/jobs`);
     const data = await res.json();
     renderTable('jobsTable',
-        ['ID', 'Company', 'Location', 'Role', 'Min CGPA', 'Package (LPA)', 'Actions'],
+        ['ID', 'Company', 'Location', 'Role', 'Min CGPA', 'Package (LPA)', 'Openings', 'Apps', 'Actions'],
         data.data,
         j => `<tr>
             <td style="color:var(--text2)">#${j.job_id}</td>
@@ -294,6 +298,8 @@ async function loadJobs() {
             <td>${j.role}</td>
             <td><span style="color:var(--warning);font-weight:600">${j.min_cgpa}+</span></td>
             <td><span style="color:var(--success);font-weight:700">${j.package} LPA</span></td>
+            <td>${j.selected_count || 0}/${j.openings}</td>
+            <td>${j.application_count || 0}</td>
             <td><button class="btn-sm btn-danger" onclick="deleteJobRole(${j.job_id})">Delete</button></td>
         </tr>`
     );
@@ -393,6 +399,16 @@ async function loadApplications() {
             </td>
         </tr>`
     );
+
+    // Populate process form job dropdown
+    const jRes  = await fetch(`${API}/companies/jobs`);
+    const jData = await jRes.json();
+    const processJobEl = document.getElementById('process_job');
+    if (processJobEl) {
+        processJobEl.innerHTML = (jData.data || []).map(j =>
+            `<option value="${j.job_id}">${j.company_name} — ${j.role} (${j.application_count || 0} apps)</option>`
+        ).join('');
+    }
 }
 
 async function updateStatus(id, status) {
@@ -400,6 +416,26 @@ async function updateStatus(id, status) {
     const data = await res.json();
     showToast(data.message, data.success ? 'success' : 'error');
     if (data.success) loadApplications();
+}
+
+// ─── PROCESS APPLICATIONS (Cursor-based SP) ──────────────────
+async function processApps() {
+    const job_id = document.getElementById('process_job').value;
+    const min_cgpa_cutoff = parseFloat(document.getElementById('process_cutoff').value);
+    if (!job_id || isNaN(min_cgpa_cutoff)) return showToast('Select job and enter cutoff', 'error');
+    if (!confirm('This will auto-select/reject ALL pending applications for this job. Continue?')) return;
+
+    const res  = await fetch(`${API}/applications/process`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ job_id, min_cgpa_cutoff })
+    });
+    const data = await res.json();
+    showToast(data.message, data.success ? 'success' : 'error');
+    if (data.success) {
+        toggleForm('processForm');
+        loadApplications();
+    }
 }
 
 // ─── PLACEMENT RESULTS ────────────────────────────────────────
@@ -441,6 +477,8 @@ async function addResult() {
     showToast(data.message, data.success ? 'success' : 'error');
     if (data.success) { toggleForm('resultForm'); loadResults(); loadDashboard(); }
 }
+
+
 
 // ─── INIT ─────────────────────────────────────────────────────
 loadDashboard();

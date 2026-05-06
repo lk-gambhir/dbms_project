@@ -1,11 +1,12 @@
 // controllers/studentController.js
+// Uses transactions for data integrity
 const db = require('../models/db');
 
-// ─── GET ALL STUDENTS ────────────────────────────────────────
+// ─── GET ALL STUDENTS (uses enhanced view) ───────────────────
 const getAllStudents = async (req, res) => {
     try {
         const { search, sortBy } = req.query;
-        let query = 'SELECT * FROM STUDENT';
+        let query = 'SELECT * FROM vw_student_profile';
         const params = [];
 
         if (search) {
@@ -27,7 +28,7 @@ const getAllStudents = async (req, res) => {
 const getStudentById = async (req, res) => {
     try {
         const [rows] = await db.query(
-            'SELECT * FROM STUDENT WHERE student_id = ?',
+            'SELECT * FROM vw_student_profile WHERE student_id = ?',
             [req.params.id]
         );
         if (rows.length === 0)
@@ -38,57 +39,114 @@ const getStudentById = async (req, res) => {
     }
 };
 
-// ─── ADD STUDENT ─────────────────────────────────────────────
+// ─── ADD STUDENT (with transaction) ──────────────────────────
 const addStudent = async (req, res) => {
+    const conn = await db.getConnection();
     try {
-        const { name, email, branch, cgpa, year } = req.body;
+        const { name, email, branch, cgpa, year, phone } = req.body;
         if (!name || !email || !branch || cgpa === undefined || !year)
             return res.status(400).json({ success: false, message: 'All fields are required' });
 
         if (cgpa < 0 || cgpa > 10)
             return res.status(400).json({ success: false, message: 'CGPA must be between 0 and 10' });
 
-        const [result] = await db.query(
-            'INSERT INTO STUDENT (name, email, branch, cgpa, year) VALUES (?, ?, ?, ?, ?)',
-            [name, email, branch, cgpa, year]
+        await conn.beginTransaction();
+
+        const [result] = await conn.query(
+            'INSERT INTO STUDENT (name, email, phone, branch, cgpa, year) VALUES (?, ?, ?, ?, ?, ?)',
+            [name, email, phone || null, branch, cgpa, year]
         );
+
+        await conn.commit();
         res.status(201).json({ success: true, message: 'Student added', id: result.insertId });
     } catch (err) {
+        await conn.rollback();
         if (err.code === 'ER_DUP_ENTRY')
             return res.status(400).json({ success: false, message: 'Email already exists' });
         res.status(500).json({ success: false, message: err.message });
+    } finally {
+        conn.release();
     }
 };
 
-// ─── UPDATE STUDENT ──────────────────────────────────────────
+// ─── UPDATE STUDENT (with transaction) ───────────────────────
 const updateStudent = async (req, res) => {
+    const conn = await db.getConnection();
     try {
-        const { name, email, branch, cgpa, year } = req.body;
-        const [result] = await db.query(
-            'UPDATE STUDENT SET name=?, email=?, branch=?, cgpa=?, year=? WHERE student_id=?',
-            [name, email, branch, cgpa, year, req.params.id]
+        const { name, email, branch, cgpa, year, phone } = req.body;
+
+        await conn.beginTransaction();
+
+        // Lock row for update
+        const [existing] = await conn.query(
+            'SELECT * FROM STUDENT WHERE student_id = ? FOR UPDATE',
+            [req.params.id]
         );
-        if (result.affectedRows === 0)
+        if (existing.length === 0) {
+            await conn.rollback();
             return res.status(404).json({ success: false, message: 'Student not found' });
+        }
+
+        await conn.query(
+            'UPDATE STUDENT SET name=?, email=?, phone=?, branch=?, cgpa=?, year=? WHERE student_id=?',
+            [name, email, phone || null, branch, cgpa, year, req.params.id]
+        );
+
+        await conn.commit();
         res.json({ success: true, message: 'Student updated' });
     } catch (err) {
+        await conn.rollback();
         res.status(500).json({ success: false, message: err.message });
+    } finally {
+        conn.release();
     }
 };
 
-// ─── DELETE STUDENT ──────────────────────────────────────────
+// ─── DELETE STUDENT (trigger prevents if placed) ─────────────
 const deleteStudent = async (req, res) => {
+    const conn = await db.getConnection();
     try {
-        const [result] = await db.query(
+        await conn.beginTransaction();
+
+        const [result] = await conn.query(
             'DELETE FROM STUDENT WHERE student_id = ?',
             [req.params.id]
         );
-        if (result.affectedRows === 0)
+        if (result.affectedRows === 0) {
+            await conn.rollback();
             return res.status(404).json({ success: false, message: 'Student not found' });
+        }
+
+        await conn.commit();
         res.json({ success: true, message: 'Student deleted' });
+    } catch (err) {
+        await conn.rollback();
+        // Catch trigger error for placed students
+        if (err.sqlState === '45000')
+            return res.status(400).json({ success: false, message: err.message });
+        res.status(500).json({ success: false, message: err.message });
+    } finally {
+        conn.release();
+    }
+};
+
+// ─── TRANSFER STUDENT BRANCH (uses SP) ───────────────────────
+const transferStudent = async (req, res) => {
+    try {
+        const { branch } = req.body;
+        if (!branch) return res.status(400).json({ success: false, message: 'New branch is required' });
+
+        await db.query('CALL sp_transfer_student(?, ?, @result)', [req.params.id, branch]);
+        const [[{ result }]] = await db.query('SELECT @result AS result');
+
+        if (result && result.startsWith('SUCCESS')) {
+            res.json({ success: true, message: result });
+        } else {
+            res.status(400).json({ success: false, message: result || 'Transfer failed' });
+        }
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
 };
 
-module.exports = { getAllStudents, getStudentById, addStudent, updateStudent, deleteStudent };
+module.exports = { getAllStudents, getStudentById, addStudent, updateStudent, deleteStudent, transferStudent };

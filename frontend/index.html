@@ -215,6 +215,19 @@
   <section class="page" id="page-applications">
     <div class="page-header">
       <h1>Applications</h1>
+      <button class="btn-primary" onclick="toggleForm('processForm')">⚡ Bulk Process</button>
+    </div>
+    <div class="form-card hidden" id="processForm">
+      <h3>Bulk Process Applications (Cursor-based SP)</h3>
+      <p style="color:var(--text2);font-size:13px;margin-bottom:12px">Uses stored procedure with cursor to auto-select/reject all pending applications for a job based on CGPA cutoff.</p>
+      <div class="form-grid">
+        <select id="process_job"></select>
+        <input type="number" id="process_cutoff" placeholder="CGPA Cutoff" step="0.1" min="0" max="10" />
+      </div>
+      <div class="form-actions">
+        <button class="btn-primary" onclick="processApps()">Process All Pending</button>
+        <button class="btn-ghost" onclick="toggleForm('processForm')">Cancel</button>
+      </div>
     </div>
     <div id="applicationsTable"></div>
   </section>
@@ -242,6 +255,10 @@
     </div>
     <div id="resultsTable"></div>
   </section>
+
+  <!-- ─── AUDIT LOG PAGE ──────────────────────────────────── -->
+
+
 
 </main>
 

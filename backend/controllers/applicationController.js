@@ -1,19 +1,12 @@
 // controllers/applicationController.js
+// Uses stored procedures & transactions for data integrity
 const db = require('../models/db');
 
-// ─── GET ALL APPLICATIONS ────────────────────────────────────
+// ─── GET ALL APPLICATIONS (uses view) ────────────────────────
 const getAllApplications = async (req, res) => {
     try {
         const [rows] = await db.query(
-            `SELECT a.application_id, a.status, a.applied_at,
-                    s.name AS student_name, s.email, s.cgpa, s.branch,
-                    j.role, j.package, j.min_cgpa,
-                    c.company_name
-             FROM APPLICATION a
-             JOIN STUDENT  s ON a.student_id = s.student_id
-             JOIN JOB_ROLE j ON a.job_id     = j.job_id
-             JOIN COMPANY  c ON j.company_id = c.company_id
-             ORDER BY a.applied_at DESC`
+            `SELECT * FROM vw_application_details ORDER BY applied_at DESC`
         );
         res.json({ success: true, data: rows });
     } catch (err) {
@@ -21,58 +14,95 @@ const getAllApplications = async (req, res) => {
     }
 };
 
-// ─── APPLY FOR JOB (with CGPA eligibility check) ─────────────
+// ─── APPLY FOR JOB (calls stored procedure with transaction) ──
 const applyForJob = async (req, res) => {
     try {
         const { student_id, job_id } = req.body;
         if (!student_id || !job_id)
             return res.status(400).json({ success: false, message: 'student_id and job_id required' });
 
-        // Manual eligibility check (also enforced by DB trigger)
-        const [[student]] = await db.query(
-            'SELECT cgpa FROM STUDENT WHERE student_id = ?', [student_id]
-        );
-        if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
-
-        const [[job]] = await db.query(
-            'SELECT min_cgpa, role FROM JOB_ROLE WHERE job_id = ?', [job_id]
-        );
-        if (!job) return res.status(404).json({ success: false, message: 'Job not found' });
-
-        if (student.cgpa < job.min_cgpa)
-            return res.status(400).json({
-                success: false,
-                message: `Not eligible. Your CGPA ${student.cgpa} is below minimum ${job.min_cgpa} for ${job.role}`
-            });
-
-        await db.query(
-            'INSERT INTO APPLICATION (student_id, job_id, status) VALUES (?, ?, "Pending")',
+        // Call stored procedure that handles transaction + concurrency
+        const [results] = await db.query(
+            'CALL sp_apply_for_job(?, ?, @result)',
             [student_id, job_id]
         );
-        res.status(201).json({ success: true, message: 'Application submitted successfully' });
+        const [[{ result }]] = await db.query('SELECT @result AS result');
+
+        if (result && result.startsWith('SUCCESS')) {
+            res.status(201).json({ success: true, message: result });
+        } else {
+            res.status(400).json({ success: false, message: result || 'Application failed' });
+        }
     } catch (err) {
         if (err.code === 'ER_DUP_ENTRY')
             return res.status(400).json({ success: false, message: 'You have already applied for this job' });
+        // Handle trigger errors
+        if (err.sqlState === '45000')
+            return res.status(400).json({ success: false, message: err.message });
         res.status(500).json({ success: false, message: err.message });
     }
 };
 
-// ─── UPDATE APPLICATION STATUS ───────────────────────────────
+// ─── UPDATE APPLICATION STATUS (with transaction) ────────────
 const updateApplicationStatus = async (req, res) => {
+    const conn = await db.getConnection();
     try {
         const { status } = req.body;
         const validStatuses = ['Pending', 'Selected', 'Rejected'];
         if (!validStatuses.includes(status))
             return res.status(400).json({ success: false, message: 'Invalid status' });
 
-        const [result] = await db.query(
+        await conn.beginTransaction();
+
+        // Concurrency: lock the row before updating
+        const [rows] = await conn.query(
+            'SELECT * FROM APPLICATION WHERE application_id = ? FOR UPDATE',
+            [req.params.id]
+        );
+        if (rows.length === 0) {
+            await conn.rollback();
+            return res.status(404).json({ success: false, message: 'Application not found' });
+        }
+
+        await conn.query(
             'UPDATE APPLICATION SET status = ? WHERE application_id = ?',
             [status, req.params.id]
         );
-        if (result.affectedRows === 0)
-            return res.status(404).json({ success: false, message: 'Application not found' });
 
+        await conn.commit();
         res.json({ success: true, message: `Status updated to ${status}` });
+    } catch (err) {
+        await conn.rollback();
+        res.status(500).json({ success: false, message: err.message });
+    } finally {
+        conn.release();
+    }
+};
+
+// ─── PROCESS ALL PENDING APPS FOR A JOB (cursor-based SP) ────
+const processApplications = async (req, res) => {
+    try {
+        const { job_id, min_cgpa_cutoff } = req.body;
+        if (!job_id || min_cgpa_cutoff === undefined)
+            return res.status(400).json({ success: false, message: 'job_id and min_cgpa_cutoff required' });
+
+        await db.query(
+            'CALL sp_process_applications(?, ?, @selected, @rejected)',
+            [job_id, min_cgpa_cutoff]
+        );
+        const [[{ selected, rejected }]] = await db.query(
+            'SELECT @selected AS selected, @rejected AS rejected'
+        );
+
+        if (selected === -1) {
+            return res.status(500).json({ success: false, message: 'Processing failed — rolled back' });
+        }
+
+        res.json({
+            success: true,
+            message: `Processed: ${selected} selected, ${rejected} rejected`,
+            data: { selected, rejected }
+        });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
@@ -82,13 +112,9 @@ const updateApplicationStatus = async (req, res) => {
 const getApplicationsByStudent = async (req, res) => {
     try {
         const [rows] = await db.query(
-            `SELECT a.application_id, a.status, a.applied_at,
-                    j.role, j.package, c.company_name
-             FROM APPLICATION a
-             JOIN JOB_ROLE j ON a.job_id = j.job_id
-             JOIN COMPANY  c ON j.company_id = c.company_id
-             WHERE a.student_id = ?
-             ORDER BY a.applied_at DESC`,
+            `SELECT * FROM vw_application_details
+             WHERE student_id = ?
+             ORDER BY applied_at DESC`,
             [req.params.student_id]
         );
         res.json({ success: true, data: rows });
@@ -97,4 +123,4 @@ const getApplicationsByStudent = async (req, res) => {
     }
 };
 
-module.exports = { getAllApplications, applyForJob, updateApplicationStatus, getApplicationsByStudent };
+module.exports = { getAllApplications, applyForJob, updateApplicationStatus, processApplications, getApplicationsByStudent };

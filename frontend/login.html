@@ -1,468 +1,550 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Login — PlacePortal TIET</title>
-<meta name="description" content="Login to the TIET Placement Portal. Access placement statistics, manage students, companies, and applications." />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
-<style>
-  :root {
-    --bg:       #0d1117;
-    --bg2:      #161b22;
-    --bg3:      #1c2330;
-    --border:   #2d3748;
-    --accent:   #4f8ef7;
-    --accent2:  #7c4dff;
-    --text:     #e6edf3;
-    --text2:    #8b949e;
-    --success:  #4fd67c;
-    --warning:  #f7a24f;
-    --danger:   #f74f6a;
-    --font-head:'Syne', sans-serif;
-    --font-body:'DM Sans', sans-serif;
-  }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — PlacePortal TIET</title>
+  <meta name="description"
+    content="Login to the TIET Placement Portal. Access placement statistics, manage students, companies, and applications." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap"
+    rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d1117;
+      --bg2: #161b22;
+      --bg3: #1c2330;
+      --border: #2d3748;
+      --accent: #4f8ef7;
+      --accent2: #7c4dff;
+      --text: #e6edf3;
+      --text2: #8b949e;
+      --success: #4fd67c;
+      --warning: #f7a24f;
+      --danger: #f74f6a;
+      --font-head: 'Syne', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-  body {
-    font-family: var(--font-body);
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    position: relative;
-  }
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
 
-  /* ─── ANIMATED BACKGROUND ──────────────────────────────── */
-  .bg-orbs {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    overflow: hidden;
-    pointer-events: none;
-  }
+    /* ─── ANIMATED BACKGROUND ──────────────────────────────── */
+    .bg-orbs {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
 
-  .orb {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(80px);
-    opacity: 0.35;
-    animation: orbFloat 12s ease-in-out infinite;
-  }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.35;
+      animation: orbFloat 12s ease-in-out infinite;
+    }
 
-  .orb-1 {
-    width: 400px; height: 400px;
-    background: var(--accent);
-    top: -100px; left: -80px;
-    animation-delay: 0s;
-  }
+    .orb-1 {
+      width: 400px;
+      height: 400px;
+      background: var(--accent);
+      top: -100px;
+      left: -80px;
+      animation-delay: 0s;
+    }
 
-  .orb-2 {
-    width: 350px; height: 350px;
-    background: var(--accent2);
-    bottom: -80px; right: -60px;
-    animation-delay: -4s;
-  }
+    .orb-2 {
+      width: 350px;
+      height: 350px;
+      background: var(--accent2);
+      bottom: -80px;
+      right: -60px;
+      animation-delay: -4s;
+    }
 
-  .orb-3 {
-    width: 250px; height: 250px;
-    background: var(--success);
-    top: 50%; left: 60%;
-    animation-delay: -8s;
-    opacity: 0.2;
-  }
+    .orb-3 {
+      width: 250px;
+      height: 250px;
+      background: var(--success);
+      top: 50%;
+      left: 60%;
+      animation-delay: -8s;
+      opacity: 0.2;
+    }
 
-  @keyframes orbFloat {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    33%      { transform: translate(30px, -40px) scale(1.05); }
-    66%      { transform: translate(-20px, 20px) scale(0.95); }
-  }
+    @keyframes orbFloat {
 
-  /* ─── LOGIN CARD ───────────────────────────────────────── */
-  .login-container {
-    position: relative;
-    z-index: 1;
-    width: 100%;
-    max-width: 440px;
-    padding: 20px;
-  }
+      0%,
+      100% {
+        transform: translate(0, 0) scale(1);
+      }
 
-  .login-card {
-    background: rgba(22, 27, 34, 0.75);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(45, 55, 72, 0.6);
-    border-radius: 20px;
-    padding: 44px 36px;
-    box-shadow: 0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(79,142,247,0.05);
-    animation: cardEntry 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
+      33% {
+        transform: translate(30px, -40px) scale(1.05);
+      }
 
-  @keyframes cardEntry {
-    from { opacity: 0; transform: translateY(30px) scale(0.96); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
-  }
+      66% {
+        transform: translate(-20px, 20px) scale(0.95);
+      }
+    }
 
-  /* ─── BRANDING ─────────────────────────────────────────── */
-  .login-brand {
-    text-align: center;
-    margin-bottom: 36px;
-  }
+    /* ─── LOGIN CARD ───────────────────────────────────────── */
+    .login-container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 440px;
+      padding: 20px;
+    }
 
-  .brand-logo {
-    width: 56px; height: 56px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border-radius: 14px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-head);
-    font-weight: 800;
-    font-size: 18px;
-    color: #fff;
-    margin-bottom: 16px;
-    box-shadow: 0 8px 32px rgba(79,142,247,0.3);
-    animation: logoPulse 3s ease-in-out infinite;
-  }
+    .login-card {
+      background: rgba(22, 27, 34, 0.75);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(45, 55, 72, 0.6);
+      border-radius: 20px;
+      padding: 44px 36px;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(79, 142, 247, 0.05);
+      animation: cardEntry 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
 
-  @keyframes logoPulse {
-    0%, 100% { box-shadow: 0 8px 32px rgba(79,142,247,0.3); }
-    50%      { box-shadow: 0 8px 48px rgba(79,142,247,0.5); }
-  }
+    @keyframes cardEntry {
+      from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.96);
+      }
 
-  .brand-title {
-    font-family: var(--font-head);
-    font-size: 24px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    margin-bottom: 4px;
-  }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
 
-  .brand-subtitle {
-    font-size: 13px;
-    color: var(--text2);
-  }
+    /* ─── BRANDING ─────────────────────────────────────────── */
+    .login-brand {
+      text-align: center;
+      margin-bottom: 36px;
+    }
 
-  /* ─── ROLE SELECTOR ────────────────────────────────────── */
-  .role-label {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 1.2px;
-    color: var(--text2);
-    margin-bottom: 12px;
-    font-weight: 600;
-  }
+    .brand-logo {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 18px;
+      color: #fff;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 32px rgba(79, 142, 247, 0.3);
+      animation: logoPulse 3s ease-in-out infinite;
+    }
 
-  .role-selector {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 28px;
-  }
+    @keyframes logoPulse {
 
-  .role-card {
-    position: relative;
-    background: var(--bg3);
-    border: 2px solid var(--border);
-    border-radius: 14px;
-    padding: 22px 16px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    user-select: none;
-  }
+      0%,
+      100% {
+        box-shadow: 0 8px 32px rgba(79, 142, 247, 0.3);
+      }
 
-  .role-card:hover {
-    border-color: rgba(79,142,247,0.4);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-  }
+      50% {
+        box-shadow: 0 8px 48px rgba(79, 142, 247, 0.5);
+      }
+    }
 
-  .role-card.selected {
-    border-color: var(--accent);
-    background: rgba(79,142,247,0.08);
-    box-shadow: 0 0 0 1px var(--accent), 0 8px 32px rgba(79,142,247,0.15);
-  }
+    .brand-title {
+      font-family: var(--font-head);
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 4px;
+    }
 
-  .role-card.selected .role-check {
-    opacity: 1;
-    transform: scale(1);
-  }
+    .brand-subtitle {
+      font-size: 13px;
+      color: var(--text2);
+    }
 
-  .role-check {
-    position: absolute;
-    top: 10px; right: 10px;
-    width: 20px; height: 20px;
-    background: var(--accent);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    color: #fff;
-    opacity: 0;
-    transform: scale(0.5);
-    transition: all 0.2s ease;
-  }
+    /* ─── ROLE SELECTOR ────────────────────────────────────── */
+    .role-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--text2);
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
 
-  .role-icon {
-    font-size: 28px;
-    margin-bottom: 10px;
-    display: block;
-  }
+    .role-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
 
-  .role-name {
-    font-family: var(--font-head);
-    font-size: 15px;
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
+    .role-card {
+      position: relative;
+      background: var(--bg3);
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 22px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      user-select: none;
+    }
 
-  .role-desc {
-    font-size: 11px;
-    color: var(--text2);
-    line-height: 1.4;
-  }
+    .role-card:hover {
+      border-color: rgba(79, 142, 247, 0.4);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
 
-  /* ─── CREDENTIALS INPUTS ───────────────────────────────── */
-  .input-group {
-    margin-bottom: 16px;
-  }
+    .role-card.selected {
+      border-color: var(--accent);
+      background: rgba(79, 142, 247, 0.08);
+      box-shadow: 0 0 0 1px var(--accent), 0 8px 32px rgba(79, 142, 247, 0.15);
+    }
 
-  .input-group label {
-    display: block;
-    font-size: 12px;
-    color: var(--text2);
-    margin-bottom: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 500;
-  }
+    .role-card.selected .role-check {
+      opacity: 1;
+      transform: scale(1);
+    }
 
-  .input-group input {
-    width: 100%;
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    color: var(--text);
-    font-family: var(--font-body);
-    font-size: 14px;
-    padding: 11px 16px;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
+    .role-check {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 20px;
+      height: 20px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: #fff;
+      opacity: 0;
+      transform: scale(0.5);
+      transition: all 0.2s ease;
+    }
 
-  .input-group input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(79,142,247,0.12);
-  }
+    .role-icon {
+      font-size: 28px;
+      margin-bottom: 10px;
+      display: block;
+    }
 
-  .input-group input::placeholder { color: var(--text2); opacity: 0.6; }
+    .role-name {
+      font-family: var(--font-head);
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
 
-  /* ─── LOGIN BUTTON ─────────────────────────────────────── */
-  .login-btn {
-    width: 100%;
-    padding: 13px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    color: #fff;
-    border: none;
-    border-radius: 12px;
-    font-family: var(--font-head);
-    font-size: 15px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s;
-    margin-top: 8px;
-    position: relative;
-    overflow: hidden;
-  }
+    .role-desc {
+      font-size: 11px;
+      color: var(--text2);
+      line-height: 1.4;
+    }
 
-  .login-btn::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, transparent, rgba(255,255,255,0.1), transparent);
-    transform: translateX(-100%);
-    transition: transform 0.5s;
-  }
+    /* ─── CREDENTIALS INPUTS ───────────────────────────────── */
+    .input-group {
+      margin-bottom: 16px;
+    }
 
-  .login-btn:hover::before {
-    transform: translateX(100%);
-  }
+    .input-group label {
+      display: block;
+      font-size: 12px;
+      color: var(--text2);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 500;
+    }
 
-  .login-btn:hover {
-    box-shadow: 0 8px 32px rgba(79,142,247,0.35);
-    transform: translateY(-1px);
-  }
+    .input-group input {
+      width: 100%;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 14px;
+      padding: 11px 16px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
 
-  .login-btn:active {
-    transform: translateY(0) scale(0.98);
-  }
+    .input-group input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(79, 142, 247, 0.12);
+    }
 
-  /* ─── ERROR MSG ────────────────────────────────────────── */
-  .login-error {
-    background: rgba(247,79,106,0.1);
-    border: 1px solid rgba(247,79,106,0.3);
-    color: var(--danger);
-    padding: 10px 14px;
-    border-radius: 8px;
-    font-size: 12.5px;
-    margin-bottom: 16px;
-    display: none;
-    animation: shake 0.4s ease;
-  }
+    .input-group input::placeholder {
+      color: var(--text2);
+      opacity: 0.6;
+    }
 
-  .login-error.visible { display: block; }
+    /* ─── LOGIN BUTTON ─────────────────────────────────────── */
+    .login-btn {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-family: var(--font-head);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+      position: relative;
+      overflow: hidden;
+    }
 
-  @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    20%      { transform: translateX(-6px); }
-    40%      { transform: translateX(6px); }
-    60%      { transform: translateX(-4px); }
-    80%      { transform: translateX(4px); }
-  }
+    .login-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      transform: translateX(-100%);
+      transition: transform 0.5s;
+    }
 
-  /* ─── FOOTER ───────────────────────────────────────────── */
-  .login-footer {
-    text-align: center;
-    margin-top: 20px;
-    font-size: 11px;
-    color: var(--text2);
-    opacity: 0.6;
-  }
+    .login-btn:hover::before {
+      transform: translateX(100%);
+    }
 
-  /* ─── PERMISSIONS HINT ─────────────────────────────────── */
-  .perm-hint {
-    margin-top: 20px;
-    padding: 14px 16px;
-    background: rgba(79,142,247,0.06);
-    border: 1px solid rgba(79,142,247,0.12);
-    border-radius: 10px;
-    font-size: 11.5px;
-    color: var(--text2);
-    line-height: 1.6;
-    transition: all 0.3s;
-  }
+    .login-btn:hover {
+      box-shadow: 0 8px 32px rgba(79, 142, 247, 0.35);
+      transform: translateY(-1px);
+    }
 
-  .perm-hint strong {
-    color: var(--text);
-    font-weight: 600;
-  }
+    .login-btn:active {
+      transform: translateY(0) scale(0.98);
+    }
 
-  .perm-hint ul {
-    margin: 6px 0 0 16px;
-    padding: 0;
-  }
+    /* ─── ERROR MSG ────────────────────────────────────────── */
+    .login-error {
+      background: rgba(247, 79, 106, 0.1);
+      border: 1px solid rgba(247, 79, 106, 0.3);
+      color: var(--danger);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      margin-bottom: 16px;
+      display: none;
+      animation: shake 0.4s ease;
+    }
 
-  .perm-hint li {
-    margin-bottom: 2px;
-  }
+    .login-error.visible {
+      display: block;
+    }
 
-  .perm-hint .perm-allowed { color: var(--success); }
-  .perm-hint .perm-denied  { color: var(--danger); opacity: 0.7; }
+    @keyframes shake {
 
-  /* ─── RESPONSIVE ───────────────────────────────────────── */
-  @media (max-width: 480px) {
-    .login-card { padding: 32px 24px; }
-    .brand-title { font-size: 20px; }
-    .role-selector { gap: 10px; }
-    .role-card { padding: 18px 12px; }
-  }
-</style>
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      20% {
+        transform: translateX(-6px);
+      }
+
+      40% {
+        transform: translateX(6px);
+      }
+
+      60% {
+        transform: translateX(-4px);
+      }
+
+      80% {
+        transform: translateX(4px);
+      }
+    }
+
+    /* ─── FOOTER ───────────────────────────────────────────── */
+    .login-footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 11px;
+      color: var(--text2);
+      opacity: 0.6;
+    }
+
+    /* ─── PERMISSIONS HINT ─────────────────────────────────── */
+    .perm-hint {
+      margin-top: 20px;
+      padding: 14px 16px;
+      background: rgba(79, 142, 247, 0.06);
+      border: 1px solid rgba(79, 142, 247, 0.12);
+      border-radius: 10px;
+      font-size: 11.5px;
+      color: var(--text2);
+      line-height: 1.6;
+      transition: all 0.3s;
+    }
+
+    .perm-hint strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .perm-hint ul {
+      margin: 6px 0 0 16px;
+      padding: 0;
+    }
+
+    .perm-hint li {
+      margin-bottom: 2px;
+    }
+
+    .perm-hint .perm-allowed {
+      color: var(--success);
+    }
+
+    .perm-hint .perm-denied {
+      color: var(--danger);
+      opacity: 0.7;
+    }
+
+    /* ─── RESPONSIVE ───────────────────────────────────────── */
+    @media (max-width: 480px) {
+      .login-card {
+        padding: 32px 24px;
+      }
+
+      .brand-title {
+        font-size: 20px;
+      }
+
+      .role-selector {
+        gap: 10px;
+      }
+
+      .role-card {
+        padding: 18px 12px;
+      }
+    }
+  </style>
 </head>
+
 <body>
 
-<!-- ─── ANIMATED BACKGROUND ORBS ──────────────────────────── -->
-<div class="bg-orbs">
-  <div class="orb orb-1"></div>
-  <div class="orb orb-2"></div>
-  <div class="orb orb-3"></div>
-</div>
-
-<!-- ─── LOGIN CARD ────────────────────────────────────────── -->
-<div class="login-container">
-  <div class="login-card">
-    <div class="login-brand">
-      <div class="brand-logo">PP</div>
-      <div class="brand-title">PlacePortal</div>
-      <div class="brand-subtitle">TIET Placement Management System</div>
-    </div>
-
-    <!-- Role Selection -->
-    <div class="role-label">Select your role</div>
-    <div class="role-selector">
-      <div class="role-card selected" id="role-admin" onclick="selectRole('admin')">
-        <div class="role-check">✓</div>
-        <span class="role-icon">🛡️</span>
-        <div class="role-name">Admin</div>
-        <div class="role-desc">Full access & management</div>
-      </div>
-      <div class="role-card" id="role-user" onclick="selectRole('user')">
-        <div class="role-check">✓</div>
-        <span class="role-icon">👤</span>
-        <div class="role-name">User</div>
-        <div class="role-desc">View data & apply for jobs</div>
-      </div>
-    </div>
-
-    <!-- Credentials -->
-    <div class="input-group">
-      <label for="login-username">Username</label>
-      <input type="text" id="login-username" placeholder="Enter your username" autocomplete="off" />
-    </div>
-    <div class="input-group">
-      <label for="login-password">Password</label>
-      <input type="password" id="login-password" placeholder="Enter your password" />
-    </div>
-
-    <div class="login-error" id="loginError"></div>
-
-    <button class="login-btn" id="loginBtn" onclick="handleLogin()">Sign In</button>
-
-    <!-- Dynamic permissions hint -->
-    <div class="perm-hint" id="permHint">
-      <strong>Admin Access Includes:</strong>
-      <ul>
-        <li class="perm-allowed">✓ Add, edit & delete students</li>
-        <li class="perm-allowed">✓ Manage companies & job roles</li>
-        <li class="perm-allowed">✓ Bulk process applications</li>
-        <li class="perm-allowed">✓ Record placement results</li>
-        <li class="perm-allowed">✓ Manage skills & assignments</li>
-      </ul>
-    </div>
-
-    <div class="login-footer">DBMS Project · UCS310 · 2025–26</div>
+  <!-- ─── ANIMATED BACKGROUND ORBS ──────────────────────────── -->
+  <div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
   </div>
-</div>
 
-<script>
-  let selectedRole = 'admin';
+  <!-- ─── LOGIN CARD ────────────────────────────────────────── -->
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-brand">
+        <div class="brand-logo">PP</div>
+        <div class="brand-title">PlacePortal</div>
+        <div class="brand-subtitle">TIET Placement Management System</div>
+      </div>
 
-  // ─── DEFAULT credentials ──────────────────────────────────
-  const CREDENTIALS = {
-    admin: { username: 'admin', password: 'admin123' },
-    user:  { username: 'user',  password: 'user123' }
-  };
+      <!-- Role Selection -->
+      <div class="role-label">Select your role</div>
+      <div class="role-selector">
+        <div class="role-card selected" id="role-admin" onclick="selectRole('admin')">
+          <div class="role-check">✓</div>
+          <span class="role-icon">🛡️</span>
+          <div class="role-name">Admin</div>
+          <div class="role-desc">Full access & management</div>
+        </div>
+        <div class="role-card" id="role-user" onclick="selectRole('user')">
+          <div class="role-check">✓</div>
+          <span class="role-icon">👤</span>
+          <div class="role-name">User</div>
+          <div class="role-desc">View data & apply for jobs</div>
+        </div>
+      </div>
 
-  // ─── Role Selection ───────────────────────────────────────
-  function selectRole(role) {
-    selectedRole = role;
-    document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
-    document.getElementById(`role-${role}`).classList.add('selected');
-    updatePermHint(role);
-    // Clear error
-    document.getElementById('loginError').classList.remove('visible');
-  }
+      <!-- Credentials -->
+      <div class="input-group">
+        <label for="login-username">Username</label>
+        <input type="text" id="login-username" placeholder="Enter your username" autocomplete="off" />
+      </div>
+      <div class="input-group">
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" placeholder="Enter your password" />
+      </div>
 
-  function updatePermHint(role) {
-    const hint = document.getElementById('permHint');
-    if (role === 'admin') {
-      hint.innerHTML = `
+      <div class="login-error" id="loginError"></div>
+
+      <button class="login-btn" id="loginBtn" onclick="handleLogin()">Sign In</button>
+
+      <!-- Dynamic permissions hint -->
+      <div class="perm-hint" id="permHint">
+        <strong>Admin Access Includes:</strong>
+        <ul>
+          <li class="perm-allowed">✓ Add, edit & delete students</li>
+          <li class="perm-allowed">✓ Manage companies & job roles</li>
+          <li class="perm-allowed">✓ Bulk process applications</li>
+          <li class="perm-allowed">✓ Record placement results</li>
+          <li class="perm-allowed">✓ Manage skills & assignments</li>
+        </ul>
+      </div>
+
+      <div class="login-footer">DBMS Project · UCS310 · 2025–26</div>
+    </div>
+  </div>
+
+  <script>
+    let selectedRole = 'admin';
+
+    // ─── DEFAULT credentials ──────────────────────────────────
+    const CREDENTIALS = {
+      admin: { username: 'admin', password: 'admin123' },
+      user: { username: 'user', password: 'user123' }
+    };
+
+    // ─── Role Selection ───────────────────────────────────────
+    function selectRole(role) {
+      selectedRole = role;
+      document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+      document.getElementById(`role-${role}`).classList.add('selected');
+      updatePermHint(role);
+      // Clear error
+      document.getElementById('loginError').classList.remove('visible');
+    }
+
+    function updatePermHint(role) {
+      const hint = document.getElementById('permHint');
+      if (role === 'admin') {
+        hint.innerHTML = `
         <strong>Admin Access Includes:</strong>
         <ul>
           <li class="perm-allowed">✓ Add, edit & delete students</li>
@@ -471,8 +553,8 @@
           <li class="perm-allowed">✓ Record placement results</li>
           <li class="perm-allowed">✓ Manage skills & assignments</li>
         </ul>`;
-    } else {
-      hint.innerHTML = `
+      } else {
+        hint.innerHTML = `
         <strong>User Access Includes:</strong>
         <ul>
           <li class="perm-allowed">✓ View dashboard & statistics</li>
@@ -482,42 +564,43 @@
           <li class="perm-denied">✗ Cannot add/delete records</li>
           <li class="perm-denied">✗ Cannot bulk process or manage</li>
         </ul>`;
-    }
-  }
-
-  // ─── Handle Login ─────────────────────────────────────────
-  function handleLogin() {
-    const username = document.getElementById('login-username').value.trim();
-    const password = document.getElementById('login-password').value;
-    const errorEl  = document.getElementById('loginError');
-
-    if (!username || !password) {
-      errorEl.textContent = 'Please enter both username and password.';
-      errorEl.classList.add('visible');
-      return;
+      }
     }
 
-    const creds = CREDENTIALS[selectedRole];
-    if (username === creds.username && password === creds.password) {
-      // Store role in sessionStorage
-      sessionStorage.setItem('pp_role', selectedRole);
-      sessionStorage.setItem('pp_user', username);
-      // Redirect to portal
-      window.location.href = 'index.html';
-    } else {
-      errorEl.textContent = `Invalid credentials for ${selectedRole} login. Try "${creds.username}" / "${creds.password}"`;
-      errorEl.classList.add('visible');
+    // ─── Handle Login ─────────────────────────────────────────
+    function handleLogin() {
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+      const errorEl = document.getElementById('loginError');
+
+      if (!username || !password) {
+        errorEl.textContent = 'Please enter both username and password.';
+        errorEl.classList.add('visible');
+        return;
+      }
+
+      const creds = CREDENTIALS[selectedRole];
+      if (username === creds.username && password === creds.password) {
+        // Store role in sessionStorage
+        sessionStorage.setItem('pp_role', selectedRole);
+        sessionStorage.setItem('pp_user', username);
+        // Redirect to portal
+        window.location.href = 'index.html';
+      } else {
+        errorEl.textContent = `Invalid credentials for ${selectedRole} login. Try "${creds.username} as username" / "${creds.password} as password"`;
+        errorEl.classList.add('visible');
+      }
     }
-  }
 
-  // ─── Enter key support ────────────────────────────────────
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Enter') handleLogin();
-  });
+    // ─── Enter key support ────────────────────────────────────
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter') handleLogin();
+    });
 
-  // ─── Auto-clear if already logged in ──────────────────────
-  // (no auto redirect — user can re-login to switch roles)
-</script>
+    // ─── Auto-clear if already logged in ──────────────────────
+    // (no auto redirect — user can re-login to switch roles)
+  </script>
 
 </body>
+
 </html>

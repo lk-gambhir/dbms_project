@@ -562,3 +562,51 @@ tbody tr:hover { background: rgba(255,255,255,0.025); }
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
   .form-grid { grid-template-columns: 1fr; }
 }
+
+/* ─── ROLE BADGE ─────────────────────────────────────────── */
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.role-badge-admin {
+  background: rgba(79,142,247,0.15);
+  color: var(--accent);
+  border: 1px solid rgba(79,142,247,0.3);
+}
+
+.role-badge-user {
+  background: rgba(139,148,158,0.15);
+  color: var(--text2);
+  border: 1px solid rgba(139,148,158,0.3);
+}
+
+/* ─── LOGOUT BUTTON ──────────────────────────────────────── */
+.btn-logout {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 12px;
+  background: rgba(247,79,106,0.08);
+  border: 1px solid rgba(247,79,106,0.2);
+  border-radius: 8px;
+  color: var(--danger);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-logout:hover {
+  background: rgba(247,79,106,0.15);
+  border-color: rgba(247,79,106,0.4);
+}

@@ -10,6 +10,14 @@
 </head>
 <body>
 
+<!-- ═══════════════════════════════════════════════ AUTH GUARD -->
+<script>
+  (function() {
+    const role = sessionStorage.getItem('pp_role');
+    if (!role) { window.location.href = 'login.html'; }
+  })();
+</script>
+
 <!-- ═══════════════════════════════════════════════ SIDEBAR -->
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-brand">
@@ -45,7 +53,12 @@
       <span class="nav-icon">★</span> Results
     </a>
   </nav>
-  <div class="sidebar-footer">DBMS Project · 2025–26</div>
+  <div class="sidebar-footer">
+    <div style="margin-bottom:8px">DBMS Project · 2025–26</div>
+    <button class="btn-logout" id="logoutBtn" onclick="handleLogout()">
+      ↩ Sign Out
+    </button>
+  </div>
 </aside>
 
 <!-- ═══════════════════════════════════════════════ MAIN -->
@@ -54,6 +67,7 @@
     <button class="menu-btn" id="menuBtn">☰</button>
     <div class="topbar-title" id="pageTitle">Dashboard</div>
     <div class="topbar-right">
+      <div class="role-badge" id="roleBadge"></div>
       <div class="status-dot"></div>
       <span class="status-text">Connected</span>
     </div>
@@ -104,7 +118,7 @@
   <section class="page" id="page-students">
     <div class="page-header">
       <h1>Students</h1>
-      <button class="btn-primary" onclick="toggleForm('studentForm')">+ Add Student</button>
+      <button class="btn-primary admin-only" onclick="toggleForm('studentForm')">+ Add Student</button>
     </div>
     <div class="form-card hidden" id="studentForm">
       <h3>Add New Student</h3>
@@ -157,7 +171,7 @@
   <section class="page" id="page-companies">
     <div class="page-header">
       <h1>Companies</h1>
-      <button class="btn-primary" onclick="toggleForm('companyForm')">+ Add Company</button>
+      <button class="btn-primary admin-only" onclick="toggleForm('companyForm')">+ Add Company</button>
     </div>
     <div class="form-card hidden" id="companyForm">
       <h3>Add Company</h3>
@@ -177,7 +191,7 @@
   <section class="page" id="page-jobs">
     <div class="page-header">
       <h1>Job Roles</h1>
-      <button class="btn-primary" onclick="toggleForm('jobForm')">+ Add Job Role</button>
+      <button class="btn-primary admin-only" onclick="toggleForm('jobForm')">+ Add Job Role</button>
     </div>
     <div class="form-card hidden" id="jobForm">
       <h3>Add Job Role</h3>
@@ -215,7 +229,7 @@
   <section class="page" id="page-applications">
     <div class="page-header">
       <h1>Applications</h1>
-      <button class="btn-primary" onclick="toggleForm('processForm')">⚡ Bulk Process</button>
+      <button class="btn-primary admin-only" onclick="toggleForm('processForm')">⚡ Bulk Process</button>
     </div>
     <div class="form-card hidden" id="processForm">
       <h3>Bulk Process Applications (Cursor-based SP)</h3>
@@ -236,7 +250,7 @@
   <section class="page" id="page-results">
     <div class="page-header">
       <h1>Placement Results</h1>
-      <button class="btn-primary" onclick="toggleForm('resultForm')">+ Add Result</button>
+      <button class="btn-primary admin-only" onclick="toggleForm('resultForm')">+ Add Result</button>
     </div>
     <div class="form-card hidden" id="resultForm">
       <h3>Record Placement Result</h3>
